@@ -1,0 +1,15 @@
+{
+	"name": "adf-nbp-dev",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "polandcentral",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "96a74215-e0c4-4a08-bfa1-bc2bc1ec84e4",
+		"tenantId": "e913a2e3-5f8c-4b5c-b9b3-a5d88349af55"
+	}
+}
