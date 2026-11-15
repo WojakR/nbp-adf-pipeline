@@ -13,7 +13,7 @@ EXEC dbo.usp_merge_exchange_rates;
 GO
 
 -- B: same data again -> 0, 0 (idempotency)
-EXEC dbo.usp_merge_exchange_rates
+EXEC dbo.usp_merge_exchange_rates;
 GO
 
 -- C: identical duplicate -> 0, 0, no error
@@ -22,16 +22,18 @@ INSERT INTO stg.exchange_rates VALUES
 EXEC dbo.usp_merge_exchange_rates;
 GO
 
--- D: conflicting duplicate -> error 50002
-INSERT INTO stg.exchange_rates VALUES
-    ('2026-11-12', '221/A/NBP/2026', 'USD', N'dolar amerykański', 3.99);
-EXEC dbo.usp_merge_exchange_rates;
-GO
-
--- E: NULL in a required column -> error 50001
+-- D: NULL in a required column -> error 50001 (expected)
 TRUNCATE TABLE stg.exchange_rates;
 INSERT INTO stg.exchange_rates VALUES
     ('2026-11-12', '221/A/NBP/2026', 'USD', N'dolar amerykański', NULL);
+EXEC dbo.usp_merge_exchange_rates;
+GO
+
+-- E: conflicting duplicate -> error 50002 (expected)
+TRUNCATE TABLE stg.exchange_rates;
+INSERT INTO stg.exchange_rates VALUES
+    ('2026-11-12', '221/A/NBP/2026', 'USD', N'dolar amerykański', 3.95),
+    ('2026-11-12', '221/A/NBP/2026', 'USD', N'dolar amerykański', 3.99);
 EXEC dbo.usp_merge_exchange_rates;
 GO
 
