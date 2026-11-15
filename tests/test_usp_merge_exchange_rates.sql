@@ -6,6 +6,7 @@
 
 -- A: valid data -> rows_inserted = 2, rows_updated = 0
 TRUNCATE TABLE stg.exchange_rates;
+TRUNCATE TABLE dbo.exchange_rates;
 INSERT INTO stg.exchange_rates VALUES
     ('2026-11-12', '221/A/NBP/2026', 'USD', N'dolar amerykański', 3.95),
     ('2026-11-12', '221/A/NBP/2026', 'EUR', N'euro', 4.25);
