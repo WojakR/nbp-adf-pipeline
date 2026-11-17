@@ -6,7 +6,7 @@
 		"typeProperties": {
 			"server": "sql-nbp-dev.database.windows.net",
 			"database": "sqldb-nbp-dev",
-			"encrypt": "strict",
+			"encrypt": "mandatory",
 			"trustServerCertificate": false,
 			"authenticationType": "SystemAssignedManagedIdentity"
 		}
