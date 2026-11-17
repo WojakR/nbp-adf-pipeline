@@ -1,0 +1,29 @@
+{
+	"name": "ds_http_nbp_tables",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_http_nbp",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"startDate": {
+				"type": "string"
+			},
+			"endDate": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "HttpServerLocation",
+				"relativeUrl": {
+					"value": "@concat('exchangerates/tables/A/', dataset().startDate, '/', dataset().endDate, '/?format=json')",
+					"type": "Expression"
+				}
+			}
+		},
+		"schema": {}
+	}
+}
