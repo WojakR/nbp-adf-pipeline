@@ -1,0 +1,14 @@
+{
+	"name": "ls_sql",
+	"properties": {
+		"annotations": [],
+		"type": "AzureSqlDatabase",
+		"typeProperties": {
+			"server": "sql-nbp-dev.database.windows.net",
+			"database": "sqldb-nbp-dev",
+			"encrypt": "strict",
+			"trustServerCertificate": false,
+			"authenticationType": "SystemAssignedManagedIdentity"
+		}
+	}
+}
