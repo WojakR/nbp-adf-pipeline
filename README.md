@@ -157,6 +157,7 @@ First run (left) and rerun of the same window (right):
 - Raw file as array of objects, not set of objects (JSON Lines) - same shape as the API response, one valid JSON document; line-by-line reading not needed at this size
 - JSON flattened with collection reference on `rates` - no OPENJSON or `NVARCHAR(MAX)` column needed
 - Merge run with Lookup, not Stored procedure activity - only Lookup returns the procedure result
+- Pipeline concurrency = 1 - one shared staging table; overlapping runs wait in a queue instead of truncating each other's staging
 - Feature branches + PR to `main`, Publish from `main` only - the live factory runs only merged code; Debug runs from the branch
 
 ### Naming
@@ -172,7 +173,6 @@ First run (left) and rerun of the same window (right):
 ## Known trade-offs
 - Factory and resource names hardcoded in linked services and scripts - fix: ARM template parameters per environment, Bicep, sqlcmd variables
 - SQL and storage reachable over public endpoints (cost) - fix: Managed VNet + Private Endpoint
-- One staging table per source - runs must not overlap, a parallel run would truncate another run's staging - fix: pipeline concurrency = 1 or `run_id` column in staging
 - Tests checked visually, nothing fails automatically - fix: `check | expected | actual` rows + `THROW` on mismatch, then run in CI
 
 ## Status
