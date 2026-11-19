@@ -92,6 +92,9 @@ so there are no keys or passwords in the repo.
    0 inserted, 0 updated, and staging still holds 160 rows (truncated before load).
 
 ![Debug run](docs/pl_nbp_ingest_debug_output.png)
+
+First run (left) and rerun of the same window (right):
+
 ![Merge result](docs/pl_nbp_ingest_lookup_output.png)
 ![Rerun result](docs/pl_nbp_ingest_rerun_output.png)
 
