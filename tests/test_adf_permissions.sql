@@ -24,6 +24,7 @@ EXECUTE AS USER = 'adf-nbp-dev';
 -- 1. Required by ingestion pipeline. Expected: all 1.
 SELECT
     HAS_PERMS_BY_NAME('stg.exchange_rates', 'OBJECT', 'INSERT') AS stg_insert,
+    HAS_PERMS_BY_NAME('stg.exchange_rates', 'OBJECT', 'SELECT') AS stg_select,
     HAS_PERMS_BY_NAME('stg.usp_truncate_exchange_rates', 'OBJECT', 'EXECUTE') AS truncate_execute,
     HAS_PERMS_BY_NAME('dbo.usp_merge_exchange_rates', 'OBJECT', 'EXECUTE') AS merge_execute;
 

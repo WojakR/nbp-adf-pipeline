@@ -1,0 +1,290 @@
+{
+	"name": "pl_nbp_ingest",
+	"properties": {
+		"activities": [
+			{
+				"name": "set_raw_folder",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "rawFolder",
+					"value": {
+						"value": "@concat('nbp/tables_a/load_date=', formatDateTime(pipeline().TriggerTime, 'yyyy-MM-dd'))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "set_raw_file",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "rawFile",
+					"value": {
+						"value": "@concat('nbp_tables_a_', pipeline().parameters.startDate, '_', pipeline().parameters.endDate, '.json')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "cp_nbp_to_raw",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "set_raw_folder",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "set_raw_file",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "HttpReadSettings",
+							"requestMethod": "GET"
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings",
+							"filePattern": "arrayOfObjects"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_http_nbp_tables",
+						"type": "DatasetReference",
+						"parameters": {
+							"startDate": {
+								"value": "@pipeline().parameters.startDate",
+								"type": "Expression"
+							},
+							"endDate": {
+								"value": "@pipeline().parameters.endDate",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_adls_raw_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"folderPath": {
+								"value": "@variables('rawFolder')",
+								"type": "Expression"
+							},
+							"fileName": {
+								"value": "@variables('rawFile')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "cp_raw_to_stg",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "cp_nbp_to_raw",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"preCopyScript": "EXEC stg.usp_truncate_exchange_rates;",
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": false,
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "$['effectiveDate']"
+								},
+								"sink": {
+									"name": "effective_date"
+								}
+							},
+							{
+								"source": {
+									"path": "$['no']"
+								},
+								"sink": {
+									"name": "table_no"
+								}
+							},
+							{
+								"source": {
+									"path": "['code']"
+								},
+								"sink": {
+									"name": "currency_code"
+								}
+							},
+							{
+								"source": {
+									"path": "['currency']"
+								},
+								"sink": {
+									"name": "currency_name"
+								}
+							},
+							{
+								"source": {
+									"path": "['mid']"
+								},
+								"sink": {
+									"name": "mid_rate"
+								}
+							}
+						],
+						"collectionReference": "$['rates']"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_adls_raw_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"folderPath": {
+								"value": "@variables('rawFolder')",
+								"type": "Expression"
+							},
+							"fileName": {
+								"value": "@variables('rawFile')",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_sql_table",
+						"type": "DatasetReference",
+						"parameters": {
+							"schemaName": "stg",
+							"tableName": "exchange_rates"
+						}
+					}
+				]
+			},
+			{
+				"name": "lkp_merge_exchange_rates",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "cp_raw_to_stg",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[dbo].[usp_merge_exchange_rates]",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_sql_table",
+						"type": "DatasetReference",
+						"parameters": {
+							"schemaName": "dbo",
+							"tableName": "exchange_rates"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"startDate": {
+				"type": "string",
+				"defaultValue": "2026-01-02"
+			},
+			"endDate": {
+				"type": "string",
+				"defaultValue": "2026-01-09"
+			}
+		},
+		"variables": {
+			"rawFolder": {
+				"type": "String"
+			},
+			"rawFile": {
+				"type": "String"
+			}
+		},
+		"annotations": []
+	}
+}
